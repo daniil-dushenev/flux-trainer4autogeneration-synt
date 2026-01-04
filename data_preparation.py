@@ -8,7 +8,7 @@ from dataclasses import dataclass
 
 from .data_loader import AnnotatedDatasetLoader, AnnotatedSample
 from .utils.prompts import generate_prompt_from_annotations
-from .utils.controlnet import prepare_controlnet_conditions
+from .utils.controlnet_union import prepare_controlnet_union_conditions
 
 
 @dataclass
@@ -85,19 +85,27 @@ class TrainingDataPreparator:
             template=self.prompt_template
         )
         
-        # Генерируем ControlNet условия
-        conditions = prepare_controlnet_conditions(
+        # Генерируем ControlNetUnion условия
+        union_image_list, union_type_list = prepare_controlnet_union_conditions(
             image,
             self.controlnet_types,
             canny_thresholds=self.canny_thresholds,
             depth_model=self.depth_model
         )
         
+        # Также сохраняем отдельные условия для обратной совместимости
+        canny_condition = union_image_list[0] if len(union_image_list) > 0 and union_type_list[0] == 1 and "canny" in self.controlnet_types else None
+        depth_condition = None
+        if len(union_image_list) > 1 and union_type_list[1] == 1:
+            depth_condition = union_image_list[1] if "depth" in self.controlnet_types else None
+        
         return TrainingSample(
             image=image,
             prompt=prompt,
-            canny_condition=conditions.get("canny"),
-            depth_condition=conditions.get("depth"),
+            canny_condition=canny_condition,
+            depth_condition=depth_condition,
+            controlnet_union_image_list=union_image_list,
+            controlnet_union_type_list=union_type_list,
             annotations=annotated_sample.annotations,
             metadata=annotated_sample.metadata,
             image_id=annotated_sample.image_id,

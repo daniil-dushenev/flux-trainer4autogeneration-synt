@@ -1,5 +1,8 @@
 """
 Утилиты для генерации ControlNet условий (canny edges и depth maps).
+
+Этот модуль сохраняется для обратной совместимости.
+Для ControlNetUnion используйте utils/controlnet_union.py
 """
 import numpy as np
 from PIL import Image

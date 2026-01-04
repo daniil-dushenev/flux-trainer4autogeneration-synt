@@ -1,5 +1,5 @@
 """
-Модуль для генерации синтетических изображений с использованием обученного LoRA + ControlNet.
+Модуль для генерации синтетических изображений с использованием обученного LoRA + ControlNetUnion.
 """
 from pathlib import Path
 from typing import List, Optional, Dict, Any, Tuple
@@ -12,7 +12,7 @@ from .data_preparation import TrainingSample
 
 class SyntheticImageGenerator:
     """
-    Класс для генерации синтетических изображений с использованием LoRA + ControlNet.
+    Класс для генерации синтетических изображений с использованием LoRA + ControlNetUnion (ControlNet++).
     """
     
     def __init__(
@@ -29,7 +29,7 @@ class SyntheticImageGenerator:
             lora_path: Путь к обученному LoRA адаптеру
             base_model: Базовая модель FLUX
             device: Устройство для вычислений ("cuda" или "cpu")
-            controlnet_types: Типы ControlNet условий (["canny", "depth"])
+            controlnet_types: Типы ControlNet условий (["canny", "depth"]) для ControlNetUnion
         """
         self.lora_path = Path(lora_path)
         self.base_model = base_model
@@ -126,13 +126,34 @@ class SyntheticImageGenerator:
         else:
             generator = None
         
-        # Подготавливаем ControlNet условия
-        # Примечание: FLUX может не поддерживать стандартный ControlNet
-        # Это упрощенная версия, в реальности нужна адаптация под FLUX
-        
+        # Подготавливаем ControlNetUnion условия
+        # ControlNetUnion поддерживает множественные условия через image_list и control_type
         try:
-            # Попытка генерации через diffusion-pipe
-            if hasattr(self.pipe, "generate_with_controlnet"):
+            # Попытка генерации через ControlNetUnion (если поддерживается)
+            if hasattr(self.pipe, "generate_with_controlnet_union"):
+                from .utils.controlnet_union import prepare_controlnet_union_conditions
+                
+                union_image_list, union_type_list = prepare_controlnet_union_conditions(
+                    canny_condition if canny_condition else depth_condition if depth_condition else Image.new("RGB", (width, height)),
+                    self.controlnet_types
+                )
+                
+                kwargs = {
+                    "prompt": prompt,
+                    "image_list": union_image_list,
+                    "control_type": union_type_list,
+                    "num_inference_steps": num_inference_steps,
+                    "guidance_scale": guidance_scale,
+                    "generator": generator,
+                    "width": width,
+                    "height": height,
+                }
+                
+                result = self.pipe.generate_with_controlnet_union(**kwargs)
+                return result.images[0]
+            
+            # Попытка генерации через стандартный ControlNet (fallback)
+            elif hasattr(self.pipe, "generate_with_controlnet"):
                 kwargs = {
                     "prompt": prompt,
                     "num_inference_steps": num_inference_steps,

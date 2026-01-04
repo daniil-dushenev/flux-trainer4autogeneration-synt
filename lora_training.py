@@ -82,14 +82,20 @@ class FluxLoRATrainer:
                 "prompt": sample.prompt,
             }
             
-            # Добавляем ControlNet условия если используются
+            # Добавляем ControlNetUnion условия если используются
             if self.config.use_controlnet:
-                conditions = {}
-                if "canny" in self.config.controlnet_types and sample.canny_condition:
-                    conditions["canny"] = sample.canny_condition
-                if "depth" in self.config.controlnet_types and sample.depth_condition:
-                    conditions["depth"] = sample.depth_condition
-                item["controlnet_conditions"] = conditions
+                # Используем ControlNetUnion формат
+                if hasattr(sample, "controlnet_union_image_list") and sample.controlnet_union_image_list:
+                    item["controlnet_union_image_list"] = sample.controlnet_union_image_list
+                    item["controlnet_union_type_list"] = sample.controlnet_union_type_list
+                else:
+                    # Fallback для обратной совместимости
+                    conditions = {}
+                    if "canny" in self.config.controlnet_types and sample.canny_condition:
+                        conditions["canny"] = sample.canny_condition
+                    if "depth" in self.config.controlnet_types and sample.depth_condition:
+                        conditions["depth"] = sample.depth_condition
+                    item["controlnet_conditions"] = conditions
             
             dataset.append(item)
         

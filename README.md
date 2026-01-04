@@ -1,6 +1,8 @@
-# Генерация синтетических данных через FLUX + LoRA + ControlNet
+# Генерация синтетических данных через FLUX + LoRA + ControlNetUnion
 
-Пайплайн для генерации синтетических данных через обучение LoRA-адаптера для модели FLUX с использованием ControlNet (canny edges + depth maps).
+Пайплайн для генерации синтетических данных через обучение LoRA-адаптера для модели FLUX с использованием ControlNetUnion (ControlNet++ из [ControlNetPlus](https://github.com/xinsir6/ControlNetPlus)).
+
+ControlNetUnion поддерживает множественные условия одновременно (canny edges, depth maps и другие).
 
 Это вторая часть общего пайплайна:
 1. **vlm-markup-anything/** - разметка данных с помощью VLM
@@ -17,7 +19,8 @@
 - `generation.py` - генерация синтетических изображений
 - `output_handler.py` - сохранение результатов (изображения + аннотации)
 - `runner.py` - главный скрипт для запуска пайплайна
-- `utils/controlnet.py` - утилиты для генерации ControlNet условий
+- `utils/controlnet.py` - утилиты для генерации ControlNet условий (legacy, для обратной совместимости)
+- `utils/controlnet_union.py` - утилиты для генерации ControlNetUnion условий
 - `utils/prompts.py` - генерация текстовых промптов из аннотаций
 
 ## Установка
@@ -25,6 +28,23 @@
 ```bash
 pip install -r requirements.txt
 ```
+
+### Установка ControlNetPlus
+
+Для работы с ControlNetUnion необходимо установить ControlNetPlus:
+
+```bash
+git clone https://github.com/xinsir6/ControlNetPlus.git
+cd ControlNetPlus
+pip install -e .
+```
+
+Или установить зависимости вручную (см. requirements.txt в репозитории ControlNetPlus).
+
+### Скачивание весов модели
+
+Веса ControlNetUnion доступны на Hugging Face:
+- https://huggingface.co/xinsir/controlnet-union-sdxl-1.0
 
 **Примечание**: Для обучения LoRA рекомендуется использовать `diffusion-pipe` (tdrussell/diffusion-pipe), который может потребовать отдельной установки. В качестве fallback используется библиотека `diffusers` от Hugging Face.
 
@@ -159,7 +179,7 @@ output/
 
 1. **diffusion-pipe**: Точный API библиотеки diffusion-pipe может отличаться от предполагаемого. Код содержит гибкую архитектуру для адаптации под реальный API.
 
-2. **ControlNet для FLUX**: FLUX использует архитектуру, отличную от Stable Diffusion. Может потребоваться адаптация ControlNet или использование FLUX-native подходов к контролю генерации.
+2. **ControlNetUnion для FLUX**: ControlNetUnion разработан для SDXL, но может использоваться с FLUX через адаптацию. FLUX использует архитектуру, отличную от Stable Diffusion. Может потребоваться адаптация ControlNetUnion или использование FLUX-native подходов к контролю генерации.
 
 3. **Генерация аннотаций**: Для синтетических изображений используются исходные аннотации из размеченных данных. Опционально можно запустить модель разметки из первой части на сгенерированных изображениях.
 
