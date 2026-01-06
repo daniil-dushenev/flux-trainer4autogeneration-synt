@@ -101,3 +101,4 @@ def generate_prompt_from_annotations(
         # Для неизвестных задач возвращаем общий промпт
         return "a photo"
 
+

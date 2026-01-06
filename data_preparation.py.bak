@@ -7,8 +7,8 @@ from PIL import Image
 from dataclasses import dataclass
 
 from data_loader import AnnotatedDatasetLoader, AnnotatedSample
-from utils.prompts import generate_prompt_from_annotations
-from utils.controlnet_union import prepare_controlnet_union_conditions
+from .utils.prompts import generate_prompt_from_annotations
+from .utils.controlnet_union import prepare_controlnet_union_conditions
 
 
 @dataclass

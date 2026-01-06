@@ -96,6 +96,20 @@ class SyntheticImageGenerator:
         except Exception as e:
             print(f"Error loading model: {e}")
             raise
+
+
+class MockPipeline:
+    """Mock pipeline для тестирования на CPU."""
+    def __call__(self, **kwargs):
+        from PIL import Image
+        # Возвращаем mock изображение
+        return type('MockResult', (), {'images': [Image.new("RGB", (512, 512), (128, 128, 128))]})()
+    
+    def generate_with_controlnet_union(self, **kwargs):
+        return self(**kwargs)
+    
+    def generate_with_controlnet(self, **kwargs):
+        return self(**kwargs)
     
     def generate(
         self,
@@ -138,7 +152,7 @@ class SyntheticImageGenerator:
         try:
             # Попытка генерации через ControlNetUnion (если поддерживается)
             if hasattr(self.pipe, "generate_with_controlnet_union"):
-                from utils.controlnet_union import prepare_controlnet_union_conditions
+                from .utils.controlnet_union import prepare_controlnet_union_conditions
                 
                 union_image_list, union_type_list = prepare_controlnet_union_conditions(
                     canny_condition if canny_condition else depth_condition if depth_condition else Image.new("RGB", (width, height)),
@@ -233,18 +247,4 @@ class SyntheticImageGenerator:
             images.append(image)
         
         return images
-
-
-class MockPipeline:
-    """Mock pipeline для тестирования на CPU."""
-    def __call__(self, **kwargs):
-        from PIL import Image
-        # Возвращаем mock изображение
-        return type('MockResult', (), {'images': [Image.new("RGB", (512, 512), (128, 128, 128))]})()
-    
-    def generate_with_controlnet_union(self, **kwargs):
-        return self(**kwargs)
-    
-    def generate_with_controlnet(self, **kwargs):
-        return self(**kwargs)
 
