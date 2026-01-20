@@ -86,6 +86,19 @@ python -m synthetic_generation.runner \
     --num-samples 50
 ```
 
+### Классификация: LoRA на класс + генерация N на класс
+
+```bash
+python -m synthetic_generation.runner \
+    path/to/predictions.jsonl \
+    outputs/synthetic_data \
+    --per-class-multiplier 2.0 \
+    --flux-model flux2-klein-4b
+```
+
+В классификации LoRA обучается для каждого класса отдельно. Для детекции пайплайн остается прежним (один LoRA).
+LoRA сохраняются в поддиректории вида `outputs/lora_checkpoints/<class_label_slug>` (для нестандартных символов добавляется короткий хэш).
+
 ## Формат входных данных
 
 Пайплайн ожидает файл `predictions.jsonl` в формате, совместимом с выводом первой части (vlm-markup-anything):
@@ -147,7 +160,9 @@ output/
       "source_image_id": "original_001.png",
       "lora_path": "outputs/lora_checkpoints/final_lora",
       "controlnet_types": ["canny", "depth"],
-      "prompt": "a photo with cat and dog"
+      "prompt": "a photo with cat and dog",
+      "class_label": "cat",
+      "flux_model": "black-forest-labs/FLUX.2-klein-4B"
     }
   }
 }
@@ -168,6 +183,11 @@ output/
 - `num_inference_steps` - количество шагов генерации (по умолчанию 50)
 - `guidance_scale` - guidance scale (по умолчанию 7.5)
 - `seed` - seed для воспроизводимости (опционально)
+- `flux_model` - HF модель или алиас (`flux1-dev`, `flux1-schnell`, `flux2-dev`, `flux2-klein-4b`, `flux2-klein-9b`, `nano`)
+- `device` - устройство для вычислений (`auto`, `cpu`, `cuda`)
+- `cpu_mode` - режим CPU: `mock` (заглушки), `copy` (копия исходных изображений), `error` (запрет CPU)
+- `per_class_num_samples` - фиксированное число изображений на класс (classification only)
+- `per_class_multiplier` - мультипликатор числа изображений на класс (classification only)
 
 ### ControlNet типы
 
@@ -245,4 +265,3 @@ run_synthetic_generation_pipeline(
 ## Лицензия
 
 См. LICENSE файл в корне проекта.
-

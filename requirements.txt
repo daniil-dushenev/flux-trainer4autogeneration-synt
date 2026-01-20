@@ -17,7 +17,7 @@ numpy>=1.24.0
 # cd ControlNetPlus
 # pip install -e .
 # Или установить зависимости вручную:
-controlnet-aux>=0.4.0  # Для предобработки условий
+controlnet-aux>=0.0.4  # Для предобработки условий
 
 # Для ControlNet и depth estimation
 # transformers уже включен выше

@@ -23,6 +23,8 @@ class TrainingSample:
     annotations: Dict[str, Any]
     metadata: Dict[str, Any]
     image_id: str
+    task: str
+    class_label: Optional[str]
 
 
 class TrainingDataPreparator:
@@ -87,6 +89,12 @@ class TrainingDataPreparator:
             template=self.prompt_template
         )
         
+        class_label = None
+        if annotated_sample.task == "classification":
+            label_value = annotated_sample.annotations.get("label")
+            if label_value is not None:
+                class_label = str(label_value)
+        
         # Генерируем ControlNetUnion условия
         union_image_list, union_type_list = prepare_controlnet_union_conditions(
             image,
@@ -119,6 +127,8 @@ class TrainingDataPreparator:
             annotations=annotated_sample.annotations,
             metadata=annotated_sample.metadata,
             image_id=annotated_sample.image_id,
+            task=annotated_sample.task,
+            class_label=class_label,
         )
     
     def prepare_all(self) -> List[TrainingSample]:
@@ -151,4 +161,3 @@ class TrainingDataPreparator:
     def __len__(self) -> int:
         """Количество сэмплов в датасете."""
         return len(self.loader)
-

@@ -21,6 +21,7 @@ class SyntheticImageGenerator:
         base_model: str = "black-forest-labs/FLUX.1-dev",
         device: Optional[str] = None,
         controlnet_types: List[str] = None,
+        cpu_mode: str = "mock",
     ):
         """
         Инициализация генератора.
@@ -35,6 +36,7 @@ class SyntheticImageGenerator:
         self.base_model = base_model
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.controlnet_types = controlnet_types or ["canny", "depth"]
+        self.cpu_mode = cpu_mode
         
         # Модель загружается при первом использовании
         self.pipe = None
@@ -45,6 +47,7 @@ class SyntheticImageGenerator:
         if self.device == "cpu":
             print("Note: Running on CPU - model loading will be skipped for testing")
             print("      Real generation requires GPU and FLUX model")
+            print(f"      CPU mode: {self.cpu_mode}")
             # Создаем mock pipe для тестирования логики
             self.pipe = MockPipeline()
             return
@@ -215,6 +218,9 @@ class SyntheticImageGenerator:
         Returns:
             Список сгенерированных изображений
         """
+        if self.device == "cpu" and self.cpu_mode == "copy":
+            return [sample.image.copy() for sample in samples]
+
         images = []
         current_seed = seed
         
@@ -247,4 +253,3 @@ class MockPipeline:
     
     def generate_with_controlnet(self, **kwargs):
         return self(**kwargs)
-

@@ -33,6 +33,8 @@ class LoRATrainingConfig:
     
     # Модель
     base_model: str = "black-forest-labs/FLUX.1-dev"
+    device: Optional[str] = None  # "cpu", "cuda", None = auto
+    cpu_mode: str = "mock"  # "mock", "copy", "error"
     
     # ControlNet
     use_controlnet: bool = True
@@ -52,7 +54,10 @@ class FluxLoRATrainer:
             config: Конфигурация обучения
         """
         self.config = config
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        if config.device:
+            self.device = config.device
+        else:
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
         
         # Создаем выходную директорию
         self.output_dir = Path(config.output_dir)
@@ -116,6 +121,9 @@ class FluxLoRATrainer:
         Returns:
             Путь к сохраненному адаптеру
         """
+        if self.device == "cpu" and self.config.cpu_mode == "error":
+            raise RuntimeError("CPU mode is set to 'error'; training is disabled on CPU.")
+
         print(f"Starting LoRA training with {len(samples)} samples")
         print(f"Device: {self.device}")
         print(f"Config: rank={self.config.rank}, lr={self.config.learning_rate}, epochs={self.config.num_epochs}")
@@ -185,6 +193,7 @@ class FluxLoRATrainer:
         if self.device == "cpu":
             print("Note: Running on CPU - creating mock LoRA for testing")
             print("      Full training requires GPU and specialized FLUX training setup")
+            print(f"      CPU mode: {self.config.cpu_mode}")
         
         # Возвращаем путь для совместимости
         final_path = self.output_dir / "final_lora"
@@ -221,10 +230,11 @@ class FluxLoRATrainer:
             "batch_size": self.config.batch_size,
             "num_epochs": self.config.num_epochs,
             "base_model": self.config.base_model,
+            "device": self.config.device,
+            "cpu_mode": self.config.cpu_mode,
             "use_controlnet": self.config.use_controlnet,
             "controlnet_types": self.config.controlnet_types,
         }
         
         with Path(path).open("w") as f:
             json.dump(config_dict, f, indent=2)
-
